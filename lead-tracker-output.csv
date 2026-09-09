@@ -1,0 +1,6 @@
+lead_id,name,company,score,status,next_action,reasoning
+1,Sarah Mitchell,Bright Bakery Co.,9,Hot Lead,Schedule discovery call this week,"Clear scope (redesign + ordering system), explicit budget ($8-12k), urgent timeline (this month), owner-level decision authority."
+2,James Okafor,Okafor Landscaping,3,Nurture,Add to monthly nurture sequence + light-touch reply,"Vague need, no budget mentioned, explicitly not in a rush. Real potential but not sales-ready yet."
+3,Priya Anand,N/A (student),1,Not a Fit,Polite decline reply,"Academic interview request, no commercial need or budget. Not a sales lead."
+4,David Chen,Meridian Logistics Regional,9,Hot Lead,Confirm scoping call + send proposal before Friday deadline,"Clear scope (dashboard + workflow automation), strong budget ($15k+), hard deadline, confirmed budget authority (ops manager)."
+5,Marketing Solutions LLC,Marketing Solutions LLC,0,Spam/Vendor Pitch,No reply - archive,"Outbound vendor pitch selling services to us, not an inbound lead."
