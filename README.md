@@ -33,6 +33,8 @@ This agent automates the *judgment* step, not just the reply step.
 | `lead-tracker-output.csv` | The agent's scored output: score, status, next action, and reasoning for each lead |
 | `follow-up-drafts.md` | The actual personalized follow-up email the agent drafted for each lead |
 | `lead-tracker-report.pdf` / `.docx` | A polished, client-facing summary report of the run |
+| `Lead Qualification & Follow-up Agent.json` | The actual, importable n8n workflow — real trigger, real AI calls, real Gmail drafts (not a simulation) |
+| `screenshots/n8n-workflow.png` | Screenshot of the full working n8n automation |
 | `case-study.md` | A walkthrough of the reasoning behind the scoring logic and example outputs |
 
 ## Why this matters for automation clients
@@ -44,6 +46,10 @@ A lot of "automation" projects stop at simple triggers: if X happens, do Y. This
 - LLM-based scoring and generation (Claude / GPT-class model)
 - CSV / webhook input (easily adapted to a form provider, Gmail, or CRM like HubSpot/Airtable)
 - Output to a tracker (CSV/Sheet) and a generated report
+
+## Live implementation
+
+This isn't just a described concept — a fully working version of this agent is built in **n8n**: a real web-form trigger, live Claude API calls for scoring and reply generation, conditional routing, and real Gmail draft creation. Import `Lead Qualification & Follow-up Agent.json` into any n8n instance to see it run.
 
 ---
 *Built by Athanasios Kyratzis — [flowforge-automation](https://github.com/flowforge-automation)*
