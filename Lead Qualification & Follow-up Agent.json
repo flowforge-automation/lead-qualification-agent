@@ -1,0 +1,540 @@
+{
+  "name": "Lead Qualification & Follow-up Agent",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "36050cfc-854a-45fd-b655-7dbf296bd624",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9ee5c6ad-e91f-414b-9162-2a4b0f61ece5",
+              "name": "name",
+              "value": "Sarah Mitchell",
+              "type": "string"
+            },
+            {
+              "id": "6adc78e9-41b8-48fe-bbbb-54a4c6341778",
+              "name": "company",
+              "value": "Bright Bakery Co.",
+              "type": "string"
+            },
+            {
+              "id": "0aabe399-c045-4f54-a6ec-41709b4431bf",
+              "name": "message",
+              "value": "Hi, we run a small bakery chain with 3 locations and our current website looks like it's from 2010. We need a full redesign plus an online ordering system so customers can order ahead for pickup. We have budget set aside (around $8-12k) and would like to get started this month if possible. Can we set up a call this week?",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "0b8d76df-6fd6-4fad-8324-41cfa71975a5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-sonnet-4-6",
+          "mode": "list",
+          "cachedResultName": "claude-sonnet-4-6"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a lead qualification assistant for a small service business.\nScore the lead message below from 0-10 using these criteria:\n- Clarity of need (0-2): do they know what they want?\n- Budget signal (0-3): did they mention a number or budget authority?\n- Urgency/timeline (0-2): is there a deadline or stated urgency?\n- Decision authority (0-2): are they the decision-maker?\n- Service fit (0-1): does the request match services offered?\n\nIf the message is an outbound vendor pitch / spam, score it 0 and set status to \"Spam/Vendor Pitch\" regardless of the above.\n\nRespond ONLY with valid JSON in this exact shape:\n{\"score\": <int 0-10>, \"status\": \"<Hot Lead|Nurture|Not a Fit|Spam/Vendor Pitch>\", \"reasoning\": \"<one sentence>\"}\n\nLead message:\n\"\"\"{{ $json.message }}\"\"\""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "81a571c2-b999-4df2-93b6-429abe00e306",
+      "name": "Message a model",
+      "credentials": {
+        "anthropicApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.content[0].text;\nconst cleaned = raw.replace(/```json\\n?/, '').replace(/```/, '').trim();\nconst parsed = JSON.parse(cleaned);\n\nreturn [{\n  json: {\n    name: $('On form submission').first().json.name,\ncompany: $('On form submission').first().json.company,\n    score: parsed.score,\n    status: parsed.status,\n    reasoning: parsed.reasoning\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        0
+      ],
+      "id": "6c5eca4b-683a-4d03-b418-f8c6e003d8a6",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "Hot Lead",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "8b8a6559-08a5-42d7-b7ab-4668c34aa6cc"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Hot Lead"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "9d2d8a49-f411-4e9b-ae86-a7cd45933cda",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "Nurture",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Nurture"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "ec05c97f-67cf-4218-994e-e1149cf527e9",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "Not a Fit",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Not a Fit"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "bd97e69b-7ef2-44cf-9b84-863fb980ecde",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "Spam/Vendor Pitch",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Spam"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "9174e27e-b530-4b09-95b6-3494775c753b",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-sonnet-4-6",
+          "mode": "list",
+          "cachedResultName": "claude-sonnet-4-6"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are drafting a follow-up email for a HOT LEAD — a qualified prospect ready to move forward. Write a warm, professional, concise email reply to {{ $json.name }} at {{ $json.company }}.\n\nContext on why they qualified as a hot lead:\n{{ $json.reasoning }}\n\nThe email should:\n- Thank them for reaching out\n- Reference their specific need\n- Propose a concrete next step (like a call this week), matching their urgency\n- Sign off as [Your name]\n\nWrite ONLY the email body — no subject line, no explanation, no markdown."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        -192
+      ],
+      "id": "66117010-95c2-401e-ae9c-ecdf6bbe6c3d",
+      "name": "Message a model1",
+      "credentials": {
+        "anthropicApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Tell us about your project",
+        "formDescription": "We'll get back to you within 1 business day.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "name"
+            },
+            {
+              "fieldLabel": "company"
+            },
+            {
+              "fieldLabel": "message",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        144,
+        144
+      ],
+      "id": "c3767cae-8719-4eda-8a6d-67c51c199e7f",
+      "name": "On form submission",
+      "webhookId": "e3e44d76-600b-4b5b-ba36-d339bf4518cd"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=New Lead Follow-up: {{ $('Code in JavaScript').item.json.company }}",
+        "message": "={{ $json.content[0].text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "34458351-3017-4de0-a51d-9c1316ad7f7b",
+      "name": "Create a draft",
+      "webhookId": "46a2a3f8-1e7c-4429-aa5a-aaaf90b07e2e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Dl2E6uRoypav7iIO",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-sonnet-4-6",
+          "mode": "list",
+          "cachedResultName": "claude-sonnet-4-6"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are drafting a follow-up email for a NURTURE lead — someone with a real need but no urgency or budget clarity yet. Write a warm, low-pressure email reply to {{ $json.name }} at {{ $json.company }}.\n\nContext on why they're in the nurture stage (not sales-ready yet):\n{{ $json.reasoning }}\n\nThe email should:\n- Thank them for reaching out\n- Acknowledge their situation without pushing for a sale or a call\n- Offer one small, genuinely useful piece of advice or resource related to their need\n- Leave the door open (\"reply anytime if you want to talk more\")\n- Sign off as [Your name]\n\nWrite ONLY the email body — no subject line, no explanation, no markdown."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        -48
+      ],
+      "id": "545662d3-3fcf-4ab7-9062-a34d529c765b",
+      "name": "Message a model2",
+      "credentials": {
+        "anthropicApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Following up: {{ $('Code in JavaScript').item.json.company }}",
+        "message": "={{ $json.content[0].text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1680,
+        -48
+      ],
+      "id": "cb0c8f26-4ed7-4e24-9c62-ef50ab00943e",
+      "name": "Create a draft1",
+      "webhookId": "3c0a60d1-377f-416a-b447-3c8401607f7e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Dl2E6uRoypav7iIO",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-sonnet-4-6",
+          "mode": "list",
+          "cachedResultName": "claude-sonnet-4-6"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are drafting a polite decline email for a lead that is NOT A FIT — either no commercial need, no budget, or outside what the business offers. Write a brief, warm, professional reply to {{ $json.name }} at {{ $json.company }}.\n\nContext on why this isn't a fit:\n{{ $json.reasoning }}\n\nThe email should:\n- Thank them for reaching out\n- Politely explain you're not able to help with this particular request (without being blunt or dismissive)\n- If appropriate, offer one small alternative form of help (e.g. answering a quick question) instead of a full engagement\n- Sign off as [Your name]\n\nWrite ONLY the email body — no subject line, no explanation, no markdown."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        96
+      ],
+      "id": "e33b8e6e-e172-4ad3-b646-867dcef0a062",
+      "name": "Message a model3",
+      "credentials": {
+        "anthropicApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Re: Your inquiry - {{ $('Code in JavaScript').item.json.company }}",
+        "message": "={{ $json.content[0].text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1632,
+        96
+      ],
+      "id": "d48ba8b5-657b-4eff-a3ed-19e055a4793f",
+      "name": "Create a draft2",
+      "webhookId": "2e143f29-33bd-49d3-ba76-b2f333c4a614",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Dl2E6uRoypav7iIO",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model2": {
+      "main": [
+        [
+          {
+            "node": "Create a draft1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model3": {
+      "main": [
+        [
+          {
+            "node": "Create a draft2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "960aab19-1f70-402e-80c2-c2b45cdf3321",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "340ab27a9977b02786c67a9df4ce847c8e376c4eb8f4709a1cb8b65df4262c0f"
+  },
+  "nodeGroups": [],
+  "id": "mPxkcHndq3RSriMN",
+  "tags": []
+}
